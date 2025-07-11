@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    {{- include "marcstreeterdev-backend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "marcstreeterdev-backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "marcstreeterdev-backend.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: marcstreeterdev-backend-config
+                  key: APP_ENV
+            - name: CORS_ALLOW_URLS
+              valueFrom:
+                configMapKeyRef:
+                  name: marcstreeterdev-backend-config
+                  key: CORS_ALLOW_URLS
+            - name: DEBUGPY_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: marcstreeterdev-backend-config
+                  key: DEBUGPY_ENABLED
+            - name: DEBUGPY_WAIT
+              valueFrom:
+                configMapKeyRef:
+                  name: marcstreeterdev-backend-config
+                  key: DEBUGPY_WAIT
+            - name: DEBUGPY_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: marcstreeterdev-backend-config
+                  key: DEBUGPY_PORT
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: marcstreeterdev-backend-secrets
+                  key: OPENAI_API_KEY
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: marcstreeterdev-backend-secrets
+                  key: ANTHROPIC_API_KEY
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: marcstreeterdev-backend-secrets
+                  key: GOOGLE_API_KEY
+            - name: DEEPSEEK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: marcstreeterdev-backend-secrets
+                  key: DEEPSEEK_API_KEY
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: marcstreeterdev-backend-secrets
+                  key: GROQ_API_KEY
+            {{- if .Values.env }}
+            # Additional environment variables from values
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.dev.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /health/general
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/general
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 5
+            successThreshold: 1
+          {{- end }} 

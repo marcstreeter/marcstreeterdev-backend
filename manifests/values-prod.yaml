@@ -1,0 +1,35 @@
+# Production values for marcstreeterdev-backend
+
+# Global configuration
+global:
+  environment: production
+
+# Development mode disabled
+dev:
+  enabled: false
+
+# Production mode enabled
+prod:
+  enabled: true
+
+# Use production resources
+resources:
+  requests:
+    memory: 64Mi
+    cpu: 50m
+  limits:
+    memory: 128Mi
+    cpu: 100m
+
+# Use production service configuration
+service:
+  port: 8000
+  targetPort: 8000
+
+# Use production build arguments
+buildArgs:
+  APP_ENV: prod
+  ENABLE_TESTING: false
+  ENABLE_LINTING: false
+  ENABLE_DEBUG: false
+  ENABLE_PRE_COMMIT: false 

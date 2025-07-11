@@ -1,0 +1,84 @@
+# Backend service Tiltfile
+# This can be run independently or included by the main manifests Tiltfile
+load('ext://secret', 'secret_from_dict')
+load('ext://configmap', 'configmap_from_dict')
+load('ext://dotenv', 'dotenv')
+
+# CONSTANTS
+DOTENV = dotenv() or {}
+SYSENV = dict(os.environ)
+
+# FUNCTIONS: we should move these to their own repo https://docs.tilt.dev/extensions.html#managing-your-own-extension-repo
+def safe_local(cmd, default=''):
+    """Execute a local command, return default value if it fails"""
+    return str(local(cmd + ' 2>/dev/null || echo "' + default + '"')).strip() or default
+
+def get_env_var(key, default=""):
+    """Get environment variable with priority: dotenv > system env > gcloud secrets > default"""
+    if key in DOTENV:  # Try dotenv first (if .env file exists)
+        return DOTENV[key]
+    
+    if key in SYSENV:  # Try system environment variable
+        return SYSENV[key]
+    
+    return safe_local('gcloud secrets versions access latest --secret="{}"'.format(key)) or default
+
+
+
+# SECRETS/CONFIGMAPS
+k8s_yaml(
+    secret_from_dict(
+        'marcstreeterdev-backend-secrets',
+        inputs={
+            'OPENAI_API_KEY': get_env_var('OPENAI_API_KEY', ''),
+            'ANTHROPIC_API_KEY': get_env_var('ANTHROPIC_API_KEY', ''),
+            'GOOGLE_API_KEY': get_env_var('GOOGLE_API_KEY', ''),
+            'DEEPSEEK_API_KEY': get_env_var('DEEPSEEK_API_KEY', ''),
+            'GROQ_API_KEY': get_env_var('GROQ_API_KEY', ''),
+        }
+    )
+)
+
+k8s_yaml(
+    configmap_from_dict(
+        'marcstreeterdev-backend-config', 
+        inputs={
+            'APP_ENV': get_env_var('APP_ENV', 'development'),
+            'CORS_ALLOW_URLS': get_env_var('CORS_ALLOW_URLS', 'http://localhost:17300,http://127.0.0.1:17300,http://localhost:17600,http://127.0.0.1:17600'),
+            'DEBUGPY_ENABLED': get_env_var('DEBUGPY_ENABLED', 'true'),
+            'DEBUGPY_WAIT': get_env_var('DEBUGPY_WAIT', 'false'),
+            'DEBUGPY_PORT': get_env_var('DEBUGPY_PORT', '5678'),
+        }
+    )
+)
+
+# MANIFESTS
+k8s_yaml(helm(
+    'manifests',
+    values=['manifests/values-dev.yaml']
+))
+
+# BUILDS
+docker_build(
+    'fastapi-app',
+    context='.',
+    dockerfile='Dockerfile',
+    build_args={
+        'INSTALL_DEV_DEPS': 'true',
+    },
+    live_update=[
+        fall_back_on(['./.env']),
+        sync('./src/', '/app/src/'),
+        sync('./pyproject.toml', '/app/pyproject.toml'),
+    ],
+)
+
+# RESOURCES
+k8s_resource(
+    'marcstreeterdev-backend',
+    port_forwards=[
+        # HOST:PORT, CONTAINER:PORT
+        port_forward(18800, 8000, name="backend-api"),
+        port_forward(18810, 5678, name="backend-debug"),
+    ],
+) 

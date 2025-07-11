@@ -1,0 +1,33 @@
+[project]
+name = "marcstreeterdev"
+version = "0.1.0"
+description = "FastAPI app with OpenAI, httpx, pytest, pre-commit, black, ruff, ty."
+authors = [
+    {name = "Marc Streeter", email = "your@email.com"}
+]
+dependencies = [
+    "fastapi>=0.110.0,<1.0.0",
+    "uvicorn[standard]>=0.29.0,<1.0.0",
+    "httpx>=0.27.0,<1.0.0",
+    "openai>=1.30.0,<2.0.0",
+    "anthropic>=0.25.0,<1.0.0",
+    "pydantic-settings>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0,<9.0.0",
+    "black>=24.4.0,<25.0.0",
+    "ruff>=0.4.0,<1.0.0",
+    "typer>=0.12.3,<1.0.0",
+    "pre-commit>=3.7.0,<4.0.0",
+    "debugpy>=1.8.0,<2.0.0"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "B", "I"] 
