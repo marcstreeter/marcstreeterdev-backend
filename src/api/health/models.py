@@ -3,7 +3,7 @@ import asyncio
 from openai import AsyncOpenAI
 from anthropic import AsyncAnthropic
 from .schemas import LLMRequest, MultiTestResponse, ProviderResult, ProviderStatus
-from src.settings import settings
+from core.settings import settings
 
 
 async def _call_openai(prompt: str, timeout: int) -> ProviderResult:

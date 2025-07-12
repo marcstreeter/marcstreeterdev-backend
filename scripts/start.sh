@@ -46,5 +46,5 @@ if [ "$INSTALL_DEV_DEPS" = "true" ]; then
     fi
 else
     echo "🏭 Starting in production mode"
-    exec python -m uvicorn src.main:app --host $HOST --port $PORT --reload
+    exec python -m uvicorn src.main:app --host $HOST --port $PORT
 fi 

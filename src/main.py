@@ -1,7 +1,16 @@
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from core.settings import settings
+from routes import api_router
 
-from src.routes import app
-from src.settings import settings
+app = FastAPI(
+    title="MarcStreeterDev Backend",
+    description="Backend service for MarcStreeterDev",
+    version="0.1.0",
+    docs_url="/docs" if settings.is_development else None,
+    redoc_url="/redoc" if settings.is_development else None,
+)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -10,6 +19,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(api_router)
 
 def setup_debugpy():
     """Setup debugpy with non-blocking configuration"""
