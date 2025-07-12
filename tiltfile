@@ -82,11 +82,7 @@ k8s_resource(
         port_forward(18810, 5678, name="backend-debug"),
     ],
     resource_deps=[],
-    labels=[
-        'api',
-        'fastapi',
-        'backend',
-    ],
+    labels=['backend'],
     links=[
         link('http://localhost:18800/docs', 'Swagger UI'),
         link('http://localhost:18800/redoc', 'ReDoc'),
